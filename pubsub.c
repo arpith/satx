@@ -3,9 +3,9 @@
 #include <string.h>
 #include <signal.h>
 
-#include <hiredis.h>
-#include <async.h>
-#include <adapters/libevent.h>
+#include "hiredis/hiredis.h"
+#include "hiredis/async.h"
+#include "hiredis/adapters/libevent.h"
 
 
 void onMessage(redisAsyncContext *c, void *reply, void *privdata) {
