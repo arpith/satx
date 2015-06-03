@@ -7,12 +7,18 @@
 #include <async.h>
 #include <adapters/libevent.h>
 
-void getCallback(redisAsyncContext *c, void *r, void *privdata) {
-    redisReply *reply = r;
-    if (reply == NULL) return;
-    printf("argv[%s]: %s\n", (char*)privdata, reply->str);
 
-    /* Disconnect after receiving the reply to GET */
+void onMessage(redisAsyncContext *c, void *reply, void *privdata) {
+    redisReply *r = reply;
+    if (reply == NULL) return;
+
+    if (r->type == REDIS_REPLY_ARRAY) {
+        for (int j = 0; j < r->elements; j++) {
+            printf("%u) %s\n", j, r->element[j]->str);
+        }
+    }
+
+    /* Disconnect after receiving the reply */
     redisAsyncDisconnect(c);
 }
 
@@ -46,8 +52,8 @@ int main (int argc, char **argv) {
     redisLibeventAttach(c,base);
     redisAsyncSetConnectCallback(c,connectCallback);
     redisAsyncSetDisconnectCallback(c,disconnectCallback);
-    redisAsyncCommand(c, NULL, NULL, "SET key %b", argv[argc-1], strlen(argv[argc-1]));
-    redisAsyncCommand(c, getCallback, (char*)"end-1", "GET key");
+    redisAsyncCommand(c, onMessage, NULL, "SUBSCRIBE testtopic");
+
     event_base_dispatch(base);
     return 0;
 }
